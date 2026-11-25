@@ -25,8 +25,14 @@ def setup_test_db():
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
-    if os.path.exists("./test_bizpulse.db"):
-        os.remove("./test_bizpulse.db")
+    engine.dispose()
+    for ext in ("", "-wal", "-shm"):
+        f = f"./test_bizpulse.db{ext}"
+        if os.path.exists(f):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
 
 
 @pytest.fixture

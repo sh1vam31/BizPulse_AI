@@ -109,7 +109,22 @@ Web Application will be available at: `http://localhost:5173`
 
 ---
 
-### Option B: Docker Compose Run
+### Option B: Cloud Deployment on Render (Single Web Service)
+
+Deploy seamlessly as a single Render Web Service (FastAPI serves both the API and the React SPA):
+1. In Render, click **New +** → **Web Service** and connect `sh1vam31/BizPulse_AI`.
+2. Configure:
+   - **Build Command:** `./build.sh`
+   - **Start Command:** `uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT`
+3. Environment variables:
+   - `DATABASE_URL`: Your Neon PostgreSQL connection string
+   - `JWT_SECRET`: Any secure random secret
+   - `PYTHON_VERSION`: `3.11.11`
+   - `BACKEND_CORS_ORIGINS`: `["*"]`
+
+---
+
+### Option C: Docker Compose Run
 
 Run the complete multi-container stack (PostgreSQL, Backend API, and Frontend):
 ```bash
@@ -159,5 +174,5 @@ Test Breakdown:
 - **Decision Engine API:** Rule evaluations, evidence packaging, grounded AI explanations (1 test).
 - **Approvals & Action Execution API:** Approval state machine, idempotent action dispatching (2 tests).
 - **End-to-End Enterprise Scenario:** Complete end-to-end integration workflow testing (1 test).
-- **Total:** **40 tests passing (100% pass rate)**.
+- **Total:** **45 tests passing (100% pass rate)**.
 
