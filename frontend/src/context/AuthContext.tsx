@@ -23,19 +23,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('bizpulse_token'));
+  const [token, setToken] = useState<string | null>(sessionStorage.getItem('bizpulse_token'));
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    // Clear any legacy localStorage tokens from previous versions
+    localStorage.removeItem('bizpulse_token');
+    localStorage.removeItem('bizpulse_user');
+
     const fetchMe = async () => {
-      const storedToken = localStorage.getItem('bizpulse_token');
+      const storedToken = sessionStorage.getItem('bizpulse_token');
       if (storedToken) {
         try {
           const res = await api.get('/auth/me');
           setUser(res.data);
         } catch (e) {
-          localStorage.removeItem('bizpulse_token');
-          localStorage.removeItem('bizpulse_user');
+          sessionStorage.removeItem('bizpulse_token');
+          sessionStorage.removeItem('bizpulse_user');
           setToken(null);
           setUser(null);
         }
@@ -48,8 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     const res = await api.post('/auth/login', { email, password });
     const { access_token, user: userData } = res.data;
-    localStorage.setItem('bizpulse_token', access_token);
-    localStorage.setItem('bizpulse_user', JSON.stringify(userData));
+    sessionStorage.setItem('bizpulse_token', access_token);
+    sessionStorage.setItem('bizpulse_user', JSON.stringify(userData));
     setToken(access_token);
     setUser(userData);
   };
@@ -63,15 +67,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: 'Business Owner',
     });
     const { access_token, user: userData } = res.data;
-    localStorage.setItem('bizpulse_token', access_token);
-    localStorage.setItem('bizpulse_user', JSON.stringify(userData));
+    sessionStorage.setItem('bizpulse_token', access_token);
+    sessionStorage.setItem('bizpulse_user', JSON.stringify(userData));
     setToken(access_token);
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('bizpulse_token');
-    localStorage.removeItem('bizpulse_user');
+    sessionStorage.removeItem('bizpulse_token');
+    sessionStorage.removeItem('bizpulse_user');
     setToken(null);
     setUser(null);
     window.location.href = '/login';

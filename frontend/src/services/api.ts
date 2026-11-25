@@ -17,7 +17,7 @@ const api = axios.create({
 
 // Interceptor to attach JWT token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('bizpulse_token');
+  const token = sessionStorage.getItem('bizpulse_token');
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -30,8 +30,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       if (!window.location.pathname.includes('/login')) {
-        localStorage.removeItem('bizpulse_token');
-        localStorage.removeItem('bizpulse_user');
+        sessionStorage.removeItem('bizpulse_token');
+        sessionStorage.removeItem('bizpulse_user');
         window.location.href = '/login';
       }
     }
