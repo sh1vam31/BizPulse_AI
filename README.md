@@ -6,6 +6,8 @@
 
 ---
 
+## Live Demo - https://bizpulse-ai-asdz.onrender.com
+
 ## 1. Executive Summary
 
 **BusinessPulse AI** is an enterprise-grade AI decision-support platform designed to transform fragmented business data into forward-looking intelligence. Traditional Business Intelligence systems merely report what happened in the past. BusinessPulse AI analyzes historical data, trains machine learning models, forecasts future risks, generates explainable recommendations, and allows human-controlled execution into external systems.
