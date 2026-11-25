@@ -1,7 +1,56 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShieldCheck, ArrowRight, Lock, Mail, User, Building } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Lock, Mail, User, Building, AlertCircle, Sparkles } from 'lucide-react';
+
+const COMMON_DOMAIN_TYPOS: Record<string, string> = {
+  'gmaill.com': 'gmail.com',
+  'gmai.com': 'gmail.com',
+  'gamil.com': 'gmail.com',
+  'gmial.com': 'gmail.com',
+  'gmaik.com': 'gmail.com',
+  'gmaio.com': 'gmail.com',
+  'gmaiil.com': 'gmail.com',
+  'gmailll.com': 'gmail.com',
+  'gemail.com': 'gmail.com',
+  'gmail.co': 'gmail.com',
+  'gmail.con': 'gmail.com',
+  'googlemail.con': 'googlemail.com',
+  'yaho.com': 'yahoo.com',
+  'yahooo.com': 'yahoo.com',
+  'yahoo.con': 'yahoo.com',
+  'yaho.co': 'yahoo.com',
+  'ymail.con': 'ymail.com',
+  'outlok.com': 'outlook.com',
+  'outloo.com': 'outlook.com',
+  'ootlook.com': 'outlook.com',
+  'outlook.con': 'outlook.com',
+  'outlock.com': 'outlook.com',
+  'hotmial.com': 'hotmail.com',
+  'hotmaill.com': 'hotmail.com',
+  'hotmali.com': 'hotmail.com',
+  'hotmail.con': 'hotmail.com',
+  'hotmai.com': 'hotmail.com',
+  'iclould.com': 'icloud.com',
+  'icoud.com': 'icloud.com',
+  'icloud.con': 'icloud.com',
+};
+
+const getEmailSuggestion = (emailStr: string): string | null => {
+  if (!emailStr || !emailStr.includes('@')) return null;
+  const parts = emailStr.split('@');
+  if (parts.length !== 2) return null;
+  const [username, domain] = parts;
+  const lowerDomain = domain.toLowerCase().trim();
+
+  if (COMMON_DOMAIN_TYPOS[lowerDomain]) {
+    return `${username}@${COMMON_DOMAIN_TYPOS[lowerDomain]}`;
+  }
+  if (lowerDomain.endsWith('.con')) {
+    return `${username}@${lowerDomain.slice(0, -4)}.com`;
+  }
+  return null;
+};
 
 export const Login: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
@@ -14,6 +63,9 @@ export const Login: React.FC = () => {
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
+
+  const emailSuggestion = getEmailSuggestion(email);
+  const nameHasNumbers = /\d/.test(name);
 
   const extractErrorMessage = (err: any, fallback: string): string => {
     const detail = err?.response?.data?.detail;
@@ -30,13 +82,35 @@ export const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Client-side validations
+    if (isRegister) {
+      if (nameHasNumbers) {
+        setError('Full name cannot contain numbers. Please enter a valid name (e.g. John Doe).');
+        return;
+      }
+      if (name.trim().length < 2) {
+        setError('Full name must be at least 2 characters long.');
+        return;
+      }
+      if (!/^[A-Za-zÀ-ÿ\s\.\'-]+$/.test(name.trim())) {
+        setError('Full name must contain only letters, spaces, hyphens, and apostrophes.');
+        return;
+      }
+    }
+
+    if (emailSuggestion) {
+      setError(`Did you mean ${emailSuggestion}? Please check your email spelling.`);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       if (isRegister) {
-        await register(name, email, password, orgName);
+        await register(name.trim(), email.trim(), password, orgName.trim());
       } else {
-        await login(email, password);
+        await login(email.trim(), password);
       }
       navigate('/');
     } catch (err: any) {
@@ -114,9 +188,17 @@ export const Login: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Jane Doe"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    className={`w-full bg-slate-950 border rounded-lg pl-9 pr-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none ${
+                      nameHasNumbers ? 'border-rose-500 focus:border-rose-500' : 'border-slate-800 focus:border-indigo-500'
+                    }`}
                   />
                 </div>
+                {nameHasNumbers && (
+                  <p className="mt-1 flex items-center gap-1 text-[11px] text-rose-400">
+                    <AlertCircle className="w-3 h-3" />
+                    Full name cannot contain numbers (e.g. John Doe).
+                  </p>
+                )}
               </div>
 
               <div>
@@ -146,9 +228,28 @@ export const Login: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="executive@company.com"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                className={`w-full bg-slate-950 border rounded-lg pl-9 pr-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none ${
+                  emailSuggestion ? 'border-amber-500/60 focus:border-amber-500' : 'border-slate-800 focus:border-indigo-500'
+                }`}
               />
             </div>
+            {emailSuggestion && (
+              <div className="mt-1.5 flex items-center justify-between text-[11px] bg-amber-500/10 border border-amber-500/25 px-2.5 py-1.5 rounded-lg text-amber-300">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>
+                    Did you mean <strong className="text-white font-medium">{emailSuggestion}</strong>?
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setEmail(emailSuggestion)}
+                  className="underline hover:text-white font-medium ml-2 shrink-0 cursor-pointer text-amber-200"
+                >
+                  Use suggestion
+                </button>
+              </div>
+            )}
           </div>
 
           <div>

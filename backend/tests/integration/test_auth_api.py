@@ -107,3 +107,44 @@ def test_rbac_role_restriction(client, admin_auth_headers, viewer_auth_headers):
     viewer_res = client.get("/api/v1/test-admin-only", headers=viewer_auth_headers)
     assert viewer_res.status_code == 403
     assert "Access forbidden" in viewer_res.json()["detail"]
+
+
+def test_register_numeric_name_fails(client):
+    payload = {
+        "name": "123",
+        "email": "validuser@example.com",
+        "password": "SecurePassword123!",
+        "organization_name": "Tech Corp",
+    }
+    response = client.post("/api/v1/auth/register", json=payload)
+    assert response.status_code == 422
+    data = response.json()
+    error_msg = str(data["detail"])
+    assert "cannot contain numbers" in error_msg
+
+
+def test_register_typo_email_fails_with_suggestion(client):
+    payload = {
+        "name": "John Doe",
+        "email": "shiv@gmaill.com",
+        "password": "SecurePassword123!",
+        "organization_name": "Tech Corp",
+    }
+    response = client.post("/api/v1/auth/register", json=payload)
+    assert response.status_code == 422
+    data = response.json()
+    error_msg = str(data["detail"])
+    assert "Did you mean @gmail.com?" in error_msg
+
+
+def test_login_typo_email_fails_with_suggestion(client):
+    payload = {
+        "email": "shiv@gmaill.com",
+        "password": "SomePassword123!",
+    }
+    response = client.post("/api/v1/auth/login", json=payload)
+    assert response.status_code == 422
+    data = response.json()
+    error_msg = str(data["detail"])
+    assert "Did you mean @gmail.com?" in error_msg
+
