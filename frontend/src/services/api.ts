@@ -1,7 +1,14 @@
 import axios from 'axios';
 
+const rawApiUrl = import.meta.env.VITE_API_URL;
+const resolvedBaseUrl = rawApiUrl
+  ? rawApiUrl.startsWith('http')
+    ? rawApiUrl
+    : `https://${rawApiUrl.replace(/\/+$/, '')}/api/v1`
+  : '/api/v1';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  baseURL: resolvedBaseUrl,
   timeout: 300000, // 5 minutes timeout for large dataset ingestion
   headers: {
     'Content-Type': 'application/json',
